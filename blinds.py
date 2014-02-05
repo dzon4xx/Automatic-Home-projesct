@@ -4,6 +4,7 @@ import serial
 import time
 import copy
 import math
+import threading
 
 from __init__ import *        
 
@@ -48,7 +49,7 @@ class Daytime():
         sunrise_tommorow     =   sun.get_sunrise(date + datetime.timedelta(days=1))
         sunrise_tommorow     =   sunrise_tommorow.replace(tzinfo=None)
 
-        sunset_yesterday     =  sun.get_sunset(date - datetime.timedelta(days=1)) 
+        sunset_yesterday     =   sun.get_sunset(date - datetime.timedelta(days=1)) 
         sunset_yesterday     =   sunset_yesterday .replace(tzinfo=None)
 
 
@@ -56,33 +57,23 @@ class Daytime():
 
         if dtime > wake_time and dtime < sunset:  # If daylight
  
-            to_sunset  = (sunset - dtime ).total_seconds()
-            #print "to sunset: {0}".format(to_sunset )
             blind.day_time  = DAY
             if blind.day_time != blind.prev_day_time:
-                blind.move(UP)
+                move = threading.Thread(target = blind.move, args=( UP, ))
+                move.start()
+
                 blind.prev_day_time = copy.copy(blind.day_time)
     
         night_evening = dtime > sunset and dtime < wake_time_tomorrow
         night_morning = dtime < wake_time and dtime > sunset_yesterday 
 
-        if night_evening: 
-            
-            to_sunrise = (sunrise_tommorow - dtime).total_seconds()
-            #print "next sunrise in: {0}s".format(to_sunrise )           
+        if night_evening or night_morning: 
+                  
             blind.day_time  = NIGHT
             if blind.day_time != blind.prev_day_time:
-                blind.move(DOWN)
-                blind.prev_day_time = copy.copy(blind.day_time)
 
-        if night_morning: 
-
-            to_sunrise = (sunrise - dtime ).total_seconds()
-            #print "today sunrise in: {0}s".format(to_sunrise )           
-            blind.day_time  = NIGHT
-
-            if blind.day_time != blind.prev_day_time:
-                blind.move(DOWN)
+                move = threading.Thread(target = blind.move, args=( DOWN, ))
+                move.start()
                 blind.prev_day_time = copy.copy(blind.day_time)
 
         return str(self.day_time )

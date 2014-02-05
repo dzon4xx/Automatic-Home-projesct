@@ -1,0 +1,3 @@
+Main zamyka wszytskie rolety. Piotr i JAsio nie musza zamykac. Main kontroluje zmierzch.
+Mozliwosc wylaczania systemu automatyki na czas nieobecnosci. Przycisk do wylacznia systemu przy sterowniku MAIN
+Opracowaæ autostart systemu przy restarcie. Kod musi odpalac sie przy starcie systemu i dzialac w tle. 

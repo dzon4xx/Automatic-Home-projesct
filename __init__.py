@@ -1,11 +1,15 @@
 import pyfirmata
 
 #Constants
-PORT    = 'COM22'
+PORT    = 'COM25'
 UP      = 1
 DOWN    = 0
-NIGHT   = 0
+
 DAY     = 1
+NIGHT   = 0
+
+HIGH    = 1
+LOW     = 0
 
 board = pyfirmata.Arduino(PORT)
 # start an iterator thread so that serial buffer doesn't overflow
