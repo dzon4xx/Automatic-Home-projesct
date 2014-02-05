@@ -136,8 +136,7 @@ class Blind():
         self.relay[direction].write(0)
         board.pass_time(self.rel_time)
         self.relay [direction].write(1)  
-
-       
+      
 sun = Sun()
 daytime = Daytime(sun)
 
@@ -150,6 +149,7 @@ blinds = [blind2, blind3]
 
 
 while True:
+
     for blind in blinds:
         daytime.check(blind)
 
