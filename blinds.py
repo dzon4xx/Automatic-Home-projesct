@@ -5,6 +5,7 @@ import time
 import copy
 import math
 import threading
+from apscheduler.scheduler import Scheduler
 
 from __init__ import *        
 
@@ -87,7 +88,42 @@ class Daytime():
             return datetime.datetime(date.year, date.month, date.day, wd_hour, wd_min )
         else:
             return datetime.datetime(date.year, date.month, date.day, hd_hour, hd_min)
-                            
+
+class My_Scheduler():
+    
+    def __init__ (self,sched, sun):
+        
+        self.sun    =   sun
+        self.sched  =   sched
+
+    def blind_tasks(self, blinds):
+        today = datetime.date.today()
+        blind_daily_tasks = []
+        for blind in blinds:
+            try:
+
+                up_time = self.get_wake_time(today, blind)
+                move_up = self.sched.add_date_job(blind.move, up_time, [UP] )
+
+                down_time= sun.get_sunset(today)
+                down_time = down_time.replace(tzinfo=None)
+                move_down = self.sched.add_date_job(blind.move, down_time , [DOWN] )
+
+                #print "time: {0} move up: {1} move down {2}".format(datetime.datetime.today() , move_up, move_down )
+            except ValueError as e:
+                print "task not add because of error: ", e 
+
+
+    def get_wake_time(self, date, blind): 
+        wd_hour =   blind.wake_time[0]
+        wd_min  =   blind.wake_time[1]
+        hd_hour =   blind.wake_time[2]
+        hd_min  =   blind.wake_time[3]
+        if date.weekday() in range(0, 4):
+            return datetime.datetime(date.year, date.month, date.day, wd_hour, wd_min )
+        else:
+            return datetime.datetime(date.year, date.month, date.day, hd_hour, hd_min)
+                                 
 class Blind():
     
     def __init__(self, name, relay_pins, wake_time):
@@ -137,20 +173,32 @@ class Blind():
         board.pass_time(self.rel_time)
         self.relay [direction].write(1)  
 
-       
-sun = Sun()
-daytime = Daytime(sun)
-
-#blind1 = Blind("JASIO",  [board.get_pin('d:2:o'), board.get_pin('d:3:o')], [6, 45, 8, 30])
+blind1 = Blind("JASIO",  [board.get_pin('d:2:o'), board.get_pin('d:3:o')], [6, 45, 8, 30])
 blind2 = Blind("PIOTR", [board.get_pin('d:4:o'), board.get_pin('d:5:o')], [7, 00, 8, 35])
 blind3 = Blind("MAIN", [board.get_pin('d:6:o'), board.get_pin('d:7:o')], [7, 05, 8, 40])
 
-blinds = [blind2, blind3]
-#blind1.set_blind(30)
+blinds = [blind1, blind2, blind3]
+       
+sun = Sun()
+sched = Scheduler()
+sched.start()
+
+my_sched = My_Scheduler(sched, sun)
+
+my_sched.blind_tasks(blinds)
 
 
+today = datetime.datetime.today()
+yesterday = None
 while True:
-    for blind in blinds:
-        daytime.check(blind)
+    today = datetime.date.today()
+
+    if today != yesterday:
+        print "today {0} yesterday {1}".format(today, yesterday)
+        yesterday = copy.copy(today)        
+        my_sched.blind_tasks(blinds)
 
     time.sleep(1)
+    
+
+    
