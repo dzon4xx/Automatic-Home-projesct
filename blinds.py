@@ -1,204 +1,92 @@
-from astral import Astral
-import datetime
-import serial
 import time
-import copy
+from __init__ import *  
 import math
-import threading
-from apscheduler.scheduler import Scheduler
 
-from __init__ import *        
-
-class Sun():
-
-    def __init__(self,):
-        a = Astral()
-        self.location = a['Warsaw']
-        
-    def get_sunset(self, d):
-        sun = self.location.sun(local=True, date=d)    
-        #print('Sunset:    s', sun['sunset'])
-        return sun['sunset']
-
-    def get_sunrise(self, d):
-        sun = self.location.sun(local=True, date=d)
-        #print('Sunrise:    ',  sun['sunrise'])
-        return sun['sunrise']
-
-class Daytime():
-
-    def __init__(self, sun):
-
-        self.prev_day_time  = None
-        self.day_time       = NIGHT # 0 night  1 day
-
-        self.sun        = sun
-
-    def check(self, blind):
-
-        dtime       =   datetime.datetime.today()      
-        date        =   datetime.date.today()
-
-        wake_time           =   self.get_wake_time(date, blind)
-        wake_time_tomorrow  =   self.get_wake_time(date + datetime.timedelta(days=1), blind)
-        sunset              =   sun.get_sunset(date)
-        sunset              =   sunset.replace(tzinfo=None)
-
-        sunrise             =   sun.get_sunrise(date) 
-        sunrise             =   sunrise.replace(tzinfo=None)
-
-        sunrise_tommorow     =   sun.get_sunrise(date + datetime.timedelta(days=1))
-        sunrise_tommorow     =   sunrise_tommorow.replace(tzinfo=None)
-
-        sunset_yesterday     =   sun.get_sunset(date - datetime.timedelta(days=1)) 
-        sunset_yesterday     =   sunset_yesterday .replace(tzinfo=None)
-
-
-        #print "name: {3} \t time: {0} \t wake_time \t {1} \t sunset: {2}".format(dtime, wake_time, sunset, blind.name )
-
-        if dtime > wake_time and dtime < sunset:  # If daylight
- 
-            blind.day_time  = DAY
-            if blind.day_time != blind.prev_day_time:
-                move = threading.Thread(target = blind.move, args=( UP, ))
-                move.start()
-
-                blind.prev_day_time = copy.copy(blind.day_time)
+class General_Blind():
     
-        night_evening = dtime > sunset and dtime < wake_time_tomorrow
-        night_morning = dtime < wake_time and dtime > sunset_yesterday 
+    def __init__(self, ):
+        pass
 
-        if night_evening or night_morning: 
-                  
-            blind.day_time  = NIGHT
-            if blind.day_time != blind.prev_day_time:
-
-                move = threading.Thread(target = blind.move, args=( DOWN, ))
-                move.start()
-                blind.prev_day_time = copy.copy(blind.day_time)
-
-        return str(self.day_time )
-                               
-    def get_wake_time(self, date, blind): 
-        wd_hour =   blind.wake_time[0]
-        wd_min  =   blind.wake_time[1]
-        hd_hour =   blind.wake_time[2]
-        hd_min  =   blind.wake_time[3]
-        if date.weekday() in range(0, 4):
-            return datetime.datetime(date.year, date.month, date.day, wd_hour, wd_min )
-        else:
-            return datetime.datetime(date.year, date.month, date.day, hd_hour, hd_min)
-
-class My_Scheduler():
-    
-    def __init__ (self,sched, sun):
-        
-        self.sun    =   sun
-        self.sched  =   sched
-
-    def blind_tasks(self, blinds):
-        today = datetime.date.today()
-        blind_daily_tasks = []
-        for blind in blinds:
-            try:
-
-                up_time = self.get_wake_time(today, blind)
-                move_up = self.sched.add_date_job(blind.move, up_time, [UP] )
-
-                down_time= sun.get_sunset(today)
-                down_time = down_time.replace(tzinfo=None)
-                move_down = self.sched.add_date_job(blind.move, down_time , [DOWN] )
-
-                #print "time: {0} move up: {1} move down {2}".format(datetime.datetime.today() , move_up, move_down )
-            except ValueError as e:
-                print "task not add because of error: ", e 
-
-
-    def get_wake_time(self, date, blind): 
-        wd_hour =   blind.wake_time[0]
-        wd_min  =   blind.wake_time[1]
-        hd_hour =   blind.wake_time[2]
-        hd_min  =   blind.wake_time[3]
-        if date.weekday() in range(0, 4):
-            return datetime.datetime(date.year, date.month, date.day, wd_hour, wd_min )
-        else:
-            return datetime.datetime(date.year, date.month, date.day, hd_hour, hd_min)
-                                 
-class Blind():
-    
-    def __init__(self, name, relay_pins, wake_time):
-        
-        self.name       =   name
-        self.relay      =   relay_pins
+    def set_relays(self,):
         for rel in self.relay:
-            rel.write(1) 
-        self.wake_time  =   wake_time
-
-        self.prev_day_time  = None
-        self.day_time       =   DAY
-
-        self.position   =   0 
-        self.rel_time   =   1.5
-        self.cycle_time =   20
-        
-
-    def set_blind(self, end_position):
-       
-        end_position = int(end_position)
-
-        if end_position < 0 or end_position > 100 or self.position==end_position:
-            raise Exception("position must be set between 0 and 100")
-
-        work_time = self.cycle_time*(float((math.fabs(end_position-self.position)))/100)
-
-        print "work_time: ", work_time
-
-        if end_position > self.position:
-            print "Blind is opening"
-            self.move(1)
-            board.pass_time(work_time-self.rel_time)
-            self.move(0) 
-        if end_position < self.position:
-            print "Blind is closing"
-            self.move(0)
-            board.pass_time(work_time-self.rel_time)
-            self.move(1) 
-                     
-        self.position   =   end_position
+            rel.write(1)
+            pass       
 
     def move(self, direction,):
 
-        print "Blind: {0} moving {1}".format(self.name, direction)
         self.relay[direction].write(0)
+        time.sleep(self.rel_time)
         board.pass_time(self.rel_time)
-        self.relay [direction].write(1)  
+        self.relay[direction].write(1)
 
-blind1 = Blind("JASIO",  [board.get_pin('d:2:o'), board.get_pin('d:3:o')], [6, 45, 8, 30])
-blind2 = Blind("PIOTR", [board.get_pin('d:4:o'), board.get_pin('d:5:o')], [7, 00, 8, 35])
-blind3 = Blind("MAIN", [board.get_pin('d:6:o'), board.get_pin('d:7:o')], [7, 05, 8, 40])
+class Single_Blind(General_Blind):
 
-blinds = [blind1, blind2, blind3]
+    def __init__(self, name, relay_pins, cycle_time, wake_sched):
+
+        self.name       =   name
+        self.relay      =   relay_pins
+        self.set_relays()
+        self.wake_sched =   wake_sched
+
+        self.position   =   0 
+        self.rel_time   =   1
+        self.cycle_time =   cycle_time
+
+    def set_blind(self, end_position):
        
-sun = Sun()
-sched = Scheduler()
-sched.start()
+        if end_position < 0 or end_position > 1:
+            raise Exception("position must be set between 0 and 1")
+       
+        else:
+            work_time = self.cycle_time*(float((math.fabs(end_position-self.position))))
 
-my_sched = My_Scheduler(sched, sun)
+            if end_position > self.position:
+                print "Blind {0} open in {1}%".format(self.name, end_position*100)
+                self.move(1)
+                time.sleep(work_time-self.rel_time)
+                board.pass_time(work_time-self.rel_time)
+                self.move(0) 
+            if end_position < self.position:
+                print "Blind {0} open in {1}%".format(self.name, end_position*100)
+                self.move(0)
+                time.sleep(work_time-self.rel_time)
+                board.pass_time(work_time-self.rel_time)
+                self.move(1) 
+                     
+            self.position   =   end_position
 
-my_sched.blind_tasks(blinds)
+class Multiple_Blind(General_Blind):
 
+    def __init__(self, name, relay_pins, cycle_time, wake_sched, single_blinds):
 
-today = datetime.datetime.today()
-yesterday = None
-while True:
-    today = datetime.date.today()
+        self.name       =   name
+        self.relay      =   relay_pins
+        self.set_relays()
+        self.wake_sched =   wake_sched
+        self.single_blinds = single_blinds
 
-    if today != yesterday:
-        print "today {0} yesterday {1}".format(today, yesterday)
-        yesterday = copy.copy(today)        
-        my_sched.blind_tasks(blinds)
+        self.position   =   0 
+        self.rel_time   =   2
+        self.cycle_time =   cycle_time
 
-    time.sleep(1)
-    
+    def set_blind(self, end_position):
 
-    
+        end_position = int(end_position)
+        if end_position < 0 or end_position > 1:
+                raise Exception("position must be set between 0 and 1")
+        
+        else:
+            if end_position > 0:
+                end_position = 1
+            
+            self.move(end_position)
+            if end_position == 0:
+                print "All blinds closed"
+            if end_position == 1:
+                print "All blinds opened"
+
+            self.position = end_position
+
+            for blind in self.single_blinds.values():
+                blind.position = end_position
+

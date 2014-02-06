@@ -1,0 +1,12 @@
+~	MAIN	
+2	d	o
+3	d	o
+$		
+~	JASIO	
+4	d	o
+5	d	o
+$		
+~	PIOTR	
+6	d	o
+7	d	o
+$			
