@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <SchemaVersion>2.0</SchemaVersion>
+        <ProjectGuid>{e09ac12b-c3ff-4e50-87ca-a3c64dac86f4}</ProjectGuid>
+        <ProjectHome />
+        <StartupFile>energy_counter_simulator.py</StartupFile>
+        <SearchPath />
+        <WorkingDirectory>.</WorkingDirectory>
+        <OutputPath>.</OutputPath>
+        <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+        <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+    <ItemGroup>
+        <Compile Include="energy_counter_simulator.py" />
+        <Compile Include="labjack.py" />
+        <Compile Include="lj_test.py" />
+        <Compile Include="__init__.py" />
+    </ItemGroup>
+    <ItemGroup />
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+</Project>
